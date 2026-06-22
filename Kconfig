@@ -207,17 +207,17 @@ endif
 config MIPI_DISPLAY_PIN_MISO
     int "MISO pin number"
     default -1
-    depends on CONFIG_HAGL_HAL_INIT_SPI
+    depends on HAGL_HAL_INIT_SPI
 
 config MIPI_DISPLAY_PIN_MOSI
     int "MOSI pin number"
     default 23
-    depends on CONFIG_HAGL_HAL_INIT_SPI
+    depends on HAGL_HAL_INIT_SPI
 
 config MIPI_DISPLAY_PIN_CLK
     int "CLK pin number"
     default 18
-    depends on CONFIG_HAGL_HAL_INIT_SPI
+    depends on HAGL_HAL_INIT_SPI
 
 config MIPI_DISPLAY_PIN_CS
     int "CS pin number"

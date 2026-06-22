@@ -184,6 +184,7 @@ mipi_display_write(spi_device_handle_t spi, uint16_t x1, uint16_t y1, uint16_t w
     return size;
 }
 
+#ifdef HAGL_HAL_INIT_SPI
 static void
 mipi_display_spi_master_init(spi_device_handle_t *spi)
 {
@@ -211,7 +212,7 @@ mipi_display_spi_master_init(spi_device_handle_t *spi)
     spi_bus_get_max_transaction_len(CONFIG_MIPI_DISPLAY_SPI_HOST, &max_bytes);
     ESP_LOGI(TAG, "SPI_MAX_TRANSFER_SIZE: %d", max_bytes);
 }
-
+#else
 static void
 mipi_display_spi_master_add(spi_device_handle_t *spi)
 {
@@ -226,7 +227,7 @@ mipi_display_spi_master_add(spi_device_handle_t *spi)
     spi_bus_get_max_transaction_len(CONFIG_MIPI_DISPLAY_SPI_HOST, &max_bytes);
     ESP_LOGI(TAG, "SPI_MAX_TRANSFER_SIZE: %d", max_bytes);
 }
-
+#endif /* HAGL_HAL_INIT_SPI */
 void
 mipi_display_init(spi_device_handle_t *spi)
 {
