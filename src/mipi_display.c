@@ -56,7 +56,7 @@ SPDX-License-Identifier: MIT
 
 static const char *TAG = "mipi_display";
 static SemaphoreHandle_t mutex;
-
+static size_t max_bytes;
 static inline int
 min(int a, int b)
 {
@@ -89,8 +89,8 @@ mipi_display_write_data(spi_device_handle_t spi, const uint8_t *data, size_t len
     /* Set DC high to denote data. */
     gpio_set_level(CONFIG_MIPI_DISPLAY_PIN_DC, 1);
 
-    for (size_t i = 0; i < length; i += SPI_MAX_TRANSFER_SIZE) {
-        size_t chunk = min(SPI_MAX_TRANSFER_SIZE, length - i);
+    for (size_t i = 0; i < length; i += max_bytes) {
+        size_t chunk = min(max_bytes, length - i);
 
         spi_transaction_t transaction = {
             .length = chunk * 8,
@@ -208,8 +208,23 @@ mipi_display_spi_master_init(spi_device_handle_t *spi)
     /* ESP32S2 requires DMA channel to match the SPI host. */
     ESP_ERROR_CHECK(spi_bus_initialize(CONFIG_MIPI_DISPLAY_SPI_HOST, &buscfg, SPI_DMA_CH_AUTO));
     ESP_ERROR_CHECK(spi_bus_add_device(CONFIG_MIPI_DISPLAY_SPI_HOST, &devcfg, spi));
+    spi_bus_get_max_transaction_len(CONFIG_MIPI_DISPLAY_SPI_HOST, &max_bytes);
+    ESP_LOGI(TAG, "SPI_MAX_TRANSFER_SIZE: %d", max_bytes);
+}
 
-    ESP_LOGI(TAG, "SPI_MAX_TRANSFER_SIZE: %d", SPI_MAX_TRANSFER_SIZE);
+static void
+mipi_display_spi_master_add(spi_device_handle_t *spi)
+{
+    spi_device_interface_config_t devcfg = {
+       .clock_speed_hz = CONFIG_MIPI_DISPLAY_SPI_CLOCK_SPEED_HZ,
+       .mode = CONFIG_MIPI_DISPLAY_SPI_MODE,
+       .spics_io_num = CONFIG_MIPI_DISPLAY_PIN_CS,
+       .queue_size = 8,
+       .flags = SPI_DEVICE_NO_DUMMY
+    };
+    ESP_ERROR_CHECK(spi_bus_add_device(CONFIG_MIPI_DISPLAY_SPI_HOST, &devcfg, spi));
+    spi_bus_get_max_transaction_len(CONFIG_MIPI_DISPLAY_SPI_HOST, &max_bytes);
+    ESP_LOGI(TAG, "SPI_MAX_TRANSFER_SIZE: %d", max_bytes);
 }
 
 void
@@ -228,8 +243,13 @@ mipi_display_init(spi_device_handle_t *spi)
     esp_rom_gpio_pad_select_gpio(CONFIG_MIPI_DISPLAY_PIN_DC);
     gpio_set_direction(CONFIG_MIPI_DISPLAY_PIN_DC, GPIO_MODE_OUTPUT);
 
+#ifdef HAGL_HAL_INIT_SPI
     mipi_display_spi_master_init(spi);
     vTaskDelay(100 / portTICK_PERIOD_MS);
+#else
+    mipi_display_spi_master_add(spi);
+    vTaskDelay(100 / portTICK_PERIOD_MS);
+#endif /* CONFIG_HAGL_HAL_INIT_SPI */
 
 #if CONFIG_MIPI_DISPLAY_PIN_RST > 0
     /* Reset the display. */

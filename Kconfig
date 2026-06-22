@@ -84,6 +84,10 @@ choice
         bool "triple"
 endchoice
 
+config HAGL_HAL_INIT_SPI
+    bool "Initialize the SPI handle before connecting to it"
+    default y
+
 config HAGL_HAL_LOCK_WHEN_FLUSHING
     bool "Lock back buffer when flushing"
     default n
@@ -203,14 +207,17 @@ endif
 config MIPI_DISPLAY_PIN_MISO
     int "MISO pin number"
     default -1
+    depends on HAGL_HAL_INIT_SPI
 
 config MIPI_DISPLAY_PIN_MOSI
     int "MOSI pin number"
     default 23
+    depends on HAGL_HAL_INIT_SPI
 
 config MIPI_DISPLAY_PIN_CLK
     int "CLK pin number"
     default 18
+    depends on HAGL_HAL_INIT_SPI
 
 config MIPI_DISPLAY_PIN_CS
     int "CS pin number"
